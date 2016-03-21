@@ -47,16 +47,15 @@ class Population(object):
     :param float elitism_pct: Percentage of population to carried over
         unchanged to the next generation when evolving. 1.0% elitism by
         default. Set this to 0 to disable.
+    :param int tournament_size: Size of tournament pool of individuals
+        that compete to crossover
     """
-
-    __metaclass__ = ABCMeta
-
-    TOURNAMENT_SIZE = 5
-
     def __init__(self, initial_state, population_size,
-                 elitism_pct=1.0):
+                 elitism_pct=1.0, tournament_size=5):
+        assert tournament_size >= 2
+        self._tournament_size = tournament_size
         assert 0.0 <= elitism_pct <= 100.0
-        self.elitism_pct = elitism_pct
+        self._elitism_pct = elitism_pct
         assert population_size > 0
         self.population_size = population_size
         assert isinstance(initial_state, State)
@@ -99,7 +98,7 @@ class Population(object):
         next_generation = []
 
         # Add elites to next generation
-        elite_size = int(self.elitism_pct * len(self.generation) / 100.0)
+        elite_size = int(self._elitism_pct * len(self.generation) / 100.0)
         elite = self.generation[:elite_size]
         next_generation.extend(elite)
 
@@ -107,7 +106,7 @@ class Population(object):
         for state in self.generation[elite_size:]:
             other = self.tournament(random.sample(
                 self.generation,
-                self.TOURNAMENT_SIZE
+                self._tournament_size
             ))
             child = state.crossover(other)  # mate
             child.mutate()  # mutate

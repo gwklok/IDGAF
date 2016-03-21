@@ -9,12 +9,8 @@ from idgaf import State, GeneticAlgorithm, Population
 def distance(a, b):
     """Calculates distance between two latitude-longitude coordinates."""
     R = 3963  # radius of Earth (miles)
-    # print("a: {} b: {}".format(a,b))
-    try:
-        lat1, lon1 = math.radians(a[0]), math.radians(a[1])
-        lat2, lon2 = math.radians(b[0]), math.radians(b[1])
-    except:
-        raise
+    lat1, lon1 = math.radians(a[0]), math.radians(a[1])
+    lat2, lon2 = math.radians(b[0]), math.radians(b[1])
     return math.acos(math.sin(lat1) * math.sin(lat2) +
                      math.cos(lat1) * math.cos(lat2) * math.cos(lon1 - lon2)) * R
 

@@ -9,6 +9,7 @@ def bruteforce_tsp(cities, announce_every=None):
     fittest = [t, t.fitness]
     announce_count = 0
     for p in itertools.permutations(t.cities.keys()):
+        announce_count += 1
         t.route = p
         if t.fitness > fittest[1]:
             fittest[1] = t.fitness
