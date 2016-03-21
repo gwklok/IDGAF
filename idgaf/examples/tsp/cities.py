@@ -24,3 +24,14 @@ cities_20 = {
     'Memphis': (35.12, 89.97),
     'Baltimore': (39.28, 76.62)
 }
+
+
+cities_7 = {
+    'New York City': (40.72, 74.00),
+    'Los Angeles': (34.05, 118.25),
+    'Chicago': (41.88, 87.63),
+    'Houston': (29.77, 95.38),
+    'Phoenix': (33.45, 112.07),
+    'Philadelphia': (39.95, 75.17),
+    'San Antonio': (29.53, 98.47)
+}

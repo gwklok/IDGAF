@@ -89,21 +89,27 @@ class TSPState(State):
         )
 
 
-def tsp_example():
-    from .cities import cities_120 as cities
+def tsp_example(cities=None, popsize=1000, generations=10000,
+                yield_every=10):
+    if cities is None:
+        from .cities import cities_120 as cities
 
     distance_matrix = get_distance_matrix(cities)
     initial_state = TSPState(cities.keys(), cities, distance_matrix)
-    population = Population(initial_state, population_size=1000,
+    population = Population(initial_state, population_size=popsize,
                             elitism_pct=1.0)
     ga = GeneticAlgorithm(population)
 
     print("Initial fitness: {}".format(initial_state.fitness))
     start_time = time.time()
-    for i, fittest in ga.run(generations=10000, yield_every=10):
+    for i, fittest in ga.run(
+        generations=generations,
+        yield_every=yield_every
+    ):
         print("Fitness {} at generation {}; runtime: {:.2f}s".format(
             fittest.fitness,
             i,
             time.time() - start_time
         ))
     print("Best fitness: {}".format(ga.fittest.fitness))
+    return ga.fittest.fitness
