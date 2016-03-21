@@ -118,8 +118,9 @@ def tsp_example():
                             elitism_pct=1.0)
     ga = GeneticAlgorithm(population)
     print("Initial fitness: {}".format(initial_state.fitness))
-    for i, fittest in ga.run(generations=100, yield_every=10):
+    for i, fittest in ga.run(generations=1000, yield_every=100):
         print("Fitness {} at generation {}".format(
             fittest.fitness,
             i
         ))
+    print("Best fitness: {}".format(ga.fittest.fitness))

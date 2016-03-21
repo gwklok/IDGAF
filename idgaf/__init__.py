@@ -145,6 +145,7 @@ class GeneticAlgorithm(object):
             ``yield_every`` generations. If this is set to None, this
             method will not yield
         """
+        assert generations >= 1
         yield_counter = 0
         for i in range(generations):
             self.population.evolve()
