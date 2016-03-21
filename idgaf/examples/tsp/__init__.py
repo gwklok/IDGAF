@@ -5,6 +5,7 @@ import json
 from copy import copy
 
 from idgaf import State, GeneticAlgorithm, Population
+from idgaf.parallel import ParallelGAManager, PopulationClassPath, runner
 
 
 def distance(a, b):
@@ -138,3 +139,21 @@ def tsp_auto_example(cities=None, minutes=1, yield_every=10):
         ))
     print("Best fitness: {}".format(ga.fittest.fitness))
     return ga.fittest.fitness
+
+
+def tsp_parallel_test():
+    from .cities import cities_20 as cities
+    distance_matrix = get_distance_matrix(cities)
+    initial_state = TSPState(cities.keys(), cities, distance_matrix)
+
+    pcp = PopulationClassPath("idgaf.examples.tsp", "TSPPopulation")
+    pc = TSPPopulation
+    pgam = ParallelGAManager(pcp, pc)
+    pgam.init_populations_from_state(initial_state=initial_state,
+                                     population_size=100)
+    fitness = pgam.run(1, 100)
+    print("Best fitness: {}".format(fitness))
+    # pop = TSPPopulation()
+    # pop.init_from_state(initial_state, 100)
+    # pop = pc.load(runner((1, pcp, pop.serialize(), 100)))
+    # print("Best fitness: {}".format(pop.fittest.fitness))

@@ -125,6 +125,23 @@ class Population(object):
     def fittest(self):
         return self.generation[0]
 
+    def combine(self, other):
+        """Combines generation with other generation and returns new
+        generation
+
+        :type other: Population
+        :return: new generation
+        :rtype: list
+        """
+        full_len = len(self.generation)
+        half_len = full_len/2
+        new = self.generation[:half_len] + other.generation[:half_len]
+        len_diff = full_len - len(new)
+        if len_diff:
+            new.extend(self.generation[:len_diff])
+        assert len(new) == full_len
+        return new
+
     #########
     # Stubs #
     #########
