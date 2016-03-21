@@ -43,12 +43,13 @@ class TSPState(State):
         self.cities = cities
         self.distance_matrix = distance_matrix
 
+    @property
     def fitness(self):
         state = self.route
         f = 0
         for i in range(len(state)):
             f += self.distance_matrix[state[i-1]][state[i]]
-        return f
+        return -f
 
     def crossover(self, other):
         route_len = len(self.route)
@@ -61,13 +62,15 @@ class TSPState(State):
             if node not in child:
                 child[child_ptr] = node
                 child_ptr += 1
+                if child_ptr == route_len:
+                    break
                 if child[child_ptr] is not None:
                     child_ptr = endpos
         # Just in case the algorithm above is broken
         assert len(set(child)) == route_len
-        self.route = child
+        return TSPState(child, self.cities, self.distance_matrix)
 
-    def mutation(self):
+    def mutate(self):
         state = self.route
         a = random.randint(0, len(state) - 1)
         b = random.randint(0, len(state) - 1)
@@ -114,6 +117,7 @@ def tsp_example():
     population = Population(initial_state, population_size=100,
                             elitism_pct=1.0)
     ga = GeneticAlgorithm(population)
+    print("Initial fitness: {}".format(initial_state.fitness))
     for i, fittest in ga.run(generations=100, yield_every=10):
         print("Fitness {} at generation {}".format(
             fittest.fitness,

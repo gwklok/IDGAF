@@ -19,12 +19,13 @@ class State(object):
         """Returns crossover between this state and another
 
         :type other: State
+        :rtype: State
         """
         raise NotImplementedError
 
     @abstractmethod
-    def mutation(self):
-        """Returns a mutation of this state; does not modify in-place"""
+    def mutate(self):
+        """Mutates this state in-place"""
         raise NotImplementedError
 
     @abstractmethod
@@ -109,7 +110,7 @@ class Population(object):
                 self.TOURNAMENT_SIZE
             ))
             child = state.crossover(other)  # mate
-            child = child.mutation()  # mutate
+            child.mutate()  # mutate
             next_generation.append(child)
 
         self.generation = next_generation
@@ -150,4 +151,5 @@ class GeneticAlgorithm(object):
             if yield_every:
                 yield_counter += 1
                 if yield_counter == yield_every:
+                    yield_counter = 0
                     yield i, self.fittest
