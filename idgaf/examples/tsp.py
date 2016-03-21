@@ -1,3 +1,4 @@
+import time
 import math
 import random
 from copy import copy
@@ -89,38 +90,20 @@ class TSPState(State):
 
 
 def tsp_example():
-    # latitude and longitude for the twenty largest U.S. cities
-    cities = {
-        'New York City': (40.72, 74.00),
-        'Los Angeles': (34.05, 118.25),
-        'Chicago': (41.88, 87.63),
-        'Houston': (29.77, 95.38),
-        'Phoenix': (33.45, 112.07),
-        'Philadelphia': (39.95, 75.17),
-        'San Antonio': (29.53, 98.47),
-        'Dallas': (32.78, 96.80),
-        'San Diego': (32.78, 117.15),
-        'San Jose': (37.30, 121.87),
-        'Detroit': (42.33, 83.05),
-        'San Francisco': (37.78, 122.42),
-        'Jacksonville': (30.32, 81.70),
-        'Indianapolis': (39.78, 86.15),
-        'Austin': (30.27, 97.77),
-        'Columbus': (39.98, 82.98),
-        'Fort Worth': (32.75, 97.33),
-        'Charlotte': (35.23, 80.85),
-        'Memphis': (35.12, 89.97),
-        'Baltimore': (39.28, 76.62)
-    }
+    from .cities import cities_120 as cities
+
     distance_matrix = get_distance_matrix(cities)
     initial_state = TSPState(cities.keys(), cities, distance_matrix)
-    population = Population(initial_state, population_size=100,
+    population = Population(initial_state, population_size=1000,
                             elitism_pct=1.0)
     ga = GeneticAlgorithm(population)
+
     print("Initial fitness: {}".format(initial_state.fitness))
-    for i, fittest in ga.run(generations=1000, yield_every=100):
-        print("Fitness {} at generation {}".format(
+    start_time = time.time()
+    for i, fittest in ga.run(generations=10000, yield_every=10):
+        print("Fitness {} at generation {}; runtime: {:.2f}s".format(
             fittest.fitness,
-            i
+            i,
+            time.time() - start_time
         ))
     print("Best fitness: {}".format(ga.fittest.fitness))
