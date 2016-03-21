@@ -1,8 +1,9 @@
-from multiprocessing import Process, cpu_count, Pool
+from multiprocessing import cpu_count, Pool
 from collections import namedtuple
 from importlib import import_module
 
 from idgaf import Population, GeneticAlgorithm
+from idgaf.util import chunks
 
 
 PopulationClassPath = namedtuple('PopulationClassPath', ['module', 'cls'])
@@ -20,7 +21,7 @@ def runner((id, pcp, population_s, generations)):
     pcls = getattr(pcls_module, pcp.cls)
     population = pcls.load(population_s)
     ga = GeneticAlgorithm(population)
-    for i, fittest in ga.run(generations=generations, yield_every=10):
+    for i, fittest in ga.run(generations=generations, yield_every=2):
         print("{}: Generation {} - Fitness {}".format(id, i, fittest.fitness))
     return ga.population.serialize()
 
@@ -43,13 +44,19 @@ class ParallelGAManager(object):
         self, initial_state, population_size, num_populations=None, *args,
         **kwargs
     ):
+        assert num_populations % 4 == 0, "num_populations must be a " \
+                                         "multiple of 4"
+        self._init_from_state_args = (initial_state, population_size)
+        self._pop_init_args = args
+        self._pop_init_kwargs = kwargs
+
         if num_populations is None:
             num_populations = cpu_count()
         populations = [
             self.pc(*args, **kwargs) for i in range(num_populations)
         ]
         for p in populations:
-            p.init_from_state(initial_state, population_size)
+            p.init_from_state(*self._init_from_state_args)
         self.populations = populations
 
     @property
@@ -65,8 +72,16 @@ class ParallelGAManager(object):
         self._populationss = [p.serialize() for p in ps]
 
     def run(self, metagenerations, generations):
+        if self._populationss is None:
+            raise ValueError("ParalleGAManager is not initalized!"
+                             " Please call init_populations_from_state"
+                             " to initialize.")
+
         process_pool = Pool()
         for mi in range(metagenerations):
+            print("Starting metageneration {}".format(mi))
+            if not self._populationss:
+                break
             self._populationss = process_pool.map(
                 runner,
                 [
@@ -75,10 +90,52 @@ class ParallelGAManager(object):
                 ]
             )
             populations = self.populations
-            print(populations)
             print("Metageneration {} complete:\n{}".format(
                 mi,
                 ["Population {} - Fitness {}".format(i, pop.fittest.fitness)
                  for i, pop in enumerate(populations)]
             ))
+
+            print("Performing recombination of populations...")
+            new_pops = []
+            for pops in chunks(populations, 4):
+                if len(pops) != 4:
+                    raise ValueError
+                pop1, pop2, pop3, pop4 = pops
+
+                new_gen = pop1.combine(pop4)
+                pop1.generation = new_gen
+                new_gen = pop1.combine(pop2)
+                pop1.generation = new_gen
+                new_gen = pop1.combine(pop3)
+                pop1.generation = new_gen
+                new_pops.append(pop1)
+
+                # TODO need original not recombinated gens here
+                new_gen = pop2.combine(pop4)
+                pop2.generation = new_gen
+                new_gen = pop2.combine(pop3)
+                pop2.generation = new_gen
+                new_gen = pop2.combine(pop1)
+                pop2.generation = new_gen
+                new_pops.append(pop2)
+
+                # TODO change this combination of ALL best not just
+                #  best of these 4
+                gen_len = len(pop3.generation)/len(pops)
+                gens = [p.generation[:gen_len] for p in pops]
+                new_gen = []
+                for gen in gens:
+                    new_gen.extend(gen)
+                len_diff = self._init_from_state_args[1] - len(new_gen)
+                if len_diff:
+                    new_gen.extend(new_gen[:len_diff])
+                assert len(new_gen) == self._init_from_state_args[1]
+                pop3.generation = new_gen
+                new_pops.append(pop3)
+
+                pop4.generation = pop4.combine(pop3)
+                new_pops.append(pop4)
+            self.populations = new_pops
+
         return max(p.fittest.fitness for p in self.populations)

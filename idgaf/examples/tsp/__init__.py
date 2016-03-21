@@ -121,7 +121,7 @@ def tsp_auto_example(cities=None, minutes=1, yield_every=10):
     distance_matrix = get_distance_matrix(cities)
     initial_state = TSPState(cities.keys(), cities, distance_matrix)
     population = Population(elitism_pct=1.0)
-    population.init_from_state(initial_state, population_size=1000)
+    population.init_from_state(initial_state, population_size=500)
     ga = GeneticAlgorithm(population)
 
     print("Initial fitness: {}".format(initial_state.fitness))
@@ -142,7 +142,7 @@ def tsp_auto_example(cities=None, minutes=1, yield_every=10):
 
 
 def tsp_parallel_test():
-    from .cities import cities_20 as cities
+    from .cities import cities_120 as cities
     distance_matrix = get_distance_matrix(cities)
     initial_state = TSPState(cities.keys(), cities, distance_matrix)
 
@@ -150,10 +150,10 @@ def tsp_parallel_test():
     pc = TSPPopulation
     pgam = ParallelGAManager(pcp, pc)
     pgam.init_populations_from_state(initial_state=initial_state,
-                                     population_size=100)
-    fitness = pgam.run(1, 100)
-    print("Best fitness: {}".format(fitness))
-    # pop = TSPPopulation()
-    # pop.init_from_state(initial_state, 100)
-    # pop = pc.load(runner((1, pcp, pop.serialize(), 100)))
-    # print("Best fitness: {}".format(pop.fittest.fitness))
+                                     population_size=500, num_populations=4)
+    start = time.time()
+    fitness = pgam.run(30, 10)
+    print("Best fitness: {}; took time {:.2f}s to find".format(
+        fitness,
+        time.time() - start
+    ))
