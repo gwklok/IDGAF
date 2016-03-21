@@ -44,22 +44,27 @@ class State(object):
 class Population(object):
     """Population
 
-    :param State initial_state: The initial state to generate population from
-    :param int population_size: Desired size of the population
     :param float elitism_pct: Percentage of population to carried over
         unchanged to the next generation when evolving. 1.0% elitism by
         default. Set this to 0 to disable.
     :param int tournament_size: Size of tournament pool of individuals
         that compete to crossover
     """
-    def __init__(self, initial_state, population_size,
-                 elitism_pct=1.0, tournament_size=5):
+    def __init__(self, elitism_pct=1.0, tournament_size=5):
         assert tournament_size >= 2
         self._tournament_size = tournament_size
         assert 0.0 <= elitism_pct <= 100.0
         self._elitism_pct = elitism_pct
+        self._generation = None
+
+    def init_from_state(self, initial_state, population_size):
+        """Initialize population from initial_state
+
+        :param State initial_state: The initial state to generate population
+            from
+        :param int population_size: Desired size of the population
+        """
         assert population_size > 0
-        self.population_size = population_size
         assert isinstance(initial_state, State)
         generation = [initial_state.new()
                       for i in range(population_size)]
@@ -120,6 +125,25 @@ class Population(object):
     def fittest(self):
         return self.generation[0]
 
+    #########
+    # Stubs #
+    #########
+
+    def serialize(self):
+        """Stub method to be used as an efficient serializer
+        for an entire population
+
+        The returned value from this method should be able to used
+        by load to create a new Population instance
+
+        :rtype: str
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def load(cls, s):
+        raise NotImplementedError
+
 
 class GeneticAlgorithm(object):
     """GeneticAlgorithm
@@ -127,6 +151,8 @@ class GeneticAlgorithm(object):
     :type population: Population
     """
     def __init__(self, population):
+        if population.generation is None:
+            raise ValueError("Population is not initalized!")
         self.population = population
 
     @property
