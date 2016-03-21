@@ -1,4 +1,6 @@
+import time
 import random
+import math
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -136,15 +138,16 @@ class GeneticAlgorithm(object):
         return self.population.fittest
 
     def run(self, generations=100, yield_every=None):
-        """Run the algorithm for the given number of generations
+        """Run the algorithm for the given number of ``generations``
 
         :param int generations: Number of generations to run for
         :param int|None yield_every: If a non-zero int is given, this method
-            will yield the fittest individual of the population every
-            ``yield_every`` generations. If this is set to None, this
-            method will not yield
+            will yield the (generation, fittest individual) of
+            the population  every ``yield_every`` generations. If this is
+            set to None, this method will not yield.
         """
         assert generations >= 1
+        assert isinstance(yield_every, (int, type(None)))
         yield_counter = 0
         for i in range(generations):
             self.population.evolve()
@@ -153,3 +156,33 @@ class GeneticAlgorithm(object):
                 if yield_counter == yield_every:
                     yield_counter = 0
                     yield i, self.fittest
+
+    def autorun(self, minutes, yield_every=None):
+        """Automatically run GA for the given ``minutes``, approximately
+
+        :param int|None yield_every: If this is set, this method will
+            yield every ``yield_every`` seconds. (Seconds, not minutes).
+        """
+        generations = self.evolutions_in(minutes=minutes)
+        seconds_per_evolution = (minutes*60.0)/generations
+        if yield_every:
+            yield_every = int(yield_every / seconds_per_evolution)
+        for i, fittest in self.run(generations=generations,
+                                   yield_every=yield_every):
+            yield i, fittest
+
+    def evolutions_in(self, minutes, test_generations=5):
+        """Determines the number of generations possible in
+        given time ``minutes``
+
+        :type minutes: float
+        :param int test_generations: Number of generations used for
+            testing
+        """
+        seconds = minutes * 60.0
+        start = time.time()
+        for i, _ in self.run(generations=test_generations):
+            pass
+        time_per_gen = (time.time() - start)/test_generations
+        generations = int(seconds/time_per_gen)
+        return generations

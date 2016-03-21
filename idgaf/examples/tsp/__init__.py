@@ -109,3 +109,30 @@ def tsp_example(cities=None, popsize=1000, generations=10000,
         ))
     print("Best fitness: {}".format(ga.fittest.fitness))
     return ga.fittest.fitness
+
+
+def tsp_auto_example(cities=None, minutes=1, yield_every=10):
+    if cities is None:
+        from .cities import cities_120 as cities
+
+    distance_matrix = get_distance_matrix(cities)
+    initial_state = TSPState(cities.keys(), cities, distance_matrix)
+    population = Population(initial_state, population_size=1000,
+                            elitism_pct=1.0)
+    ga = GeneticAlgorithm(population)
+
+    print("Initial fitness: {}".format(initial_state.fitness))
+    generations = ga.evolutions_in(minutes=minutes)
+    print("GA will run for {} generations".format(generations))
+    start_time = time.time()
+    for i, fittest in ga.autorun(
+        minutes=minutes,
+        yield_every=yield_every
+    ):
+        print("Fitness {} at generation {}; runtime: {:.2f}s".format(
+            fittest.fitness,
+            i,
+            time.time() - start_time
+        ))
+    print("Best fitness: {}".format(ga.fittest.fitness))
+    return ga.fittest.fitness
