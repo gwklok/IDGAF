@@ -1,9 +1,11 @@
 import time
 import math
 import random
+import json
 from copy import copy
 
 from idgaf import State, GeneticAlgorithm, Population
+from idgaf.parallel import ParallelGAManager, PopulationClassPath, runner
 
 
 def distance(a, b):
@@ -85,30 +87,31 @@ class TSPState(State):
         )
 
 
-def tsp_example(cities=None, popsize=1000, generations=10000,
-                yield_every=10):
-    if cities is None:
-        from .cities import cities_120 as cities
+class TSPPopulation(Population):
 
-    distance_matrix = get_distance_matrix(cities)
-    initial_state = TSPState(cities.keys(), cities, distance_matrix)
-    population = Population(initial_state, population_size=popsize,
-                            elitism_pct=1.0)
-    ga = GeneticAlgorithm(population)
+    def serialize(self):
+        sample_state=self.generation[0]
+        d = dict(
+            routes=[state.route for state in self.generation],
+            cities=sample_state.cities,
+            distance_matrix=sample_state.distance_matrix,
+            elitism_pct=self._elitism_pct,
+            tournament_size=self._tournament_size
+        )
+        return json.dumps(d)
 
-    print("Initial fitness: {}".format(initial_state.fitness))
-    start_time = time.time()
-    for i, fittest in ga.run(
-        generations=generations,
-        yield_every=yield_every
-    ):
-        print("Fitness {} at generation {}; runtime: {:.2f}s".format(
-            fittest.fitness,
-            i,
-            time.time() - start_time
-        ))
-    print("Best fitness: {}".format(ga.fittest.fitness))
-    return ga.fittest.fitness
+    @classmethod
+    def load(cls, s):
+        d = json.loads(s)
+        kwargs = {k: v for k, v in d.items() if k in ("elitism_pct",
+                                                      "tournament_size")}
+        p = cls(**kwargs)
+        cities = d['cities']
+        distance_matrix = d['distance_matrix']
+        generation = [TSPState(route, cities, distance_matrix) for route in
+                      d['routes']]
+        p.generation = generation
+        return p
 
 
 def tsp_auto_example(cities=None, minutes=1, yield_every=10):
@@ -117,8 +120,8 @@ def tsp_auto_example(cities=None, minutes=1, yield_every=10):
 
     distance_matrix = get_distance_matrix(cities)
     initial_state = TSPState(cities.keys(), cities, distance_matrix)
-    population = Population(initial_state, population_size=1000,
-                            elitism_pct=1.0)
+    population = Population(elitism_pct=1.0)
+    population.init_from_state(initial_state, population_size=500)
     ga = GeneticAlgorithm(population)
 
     print("Initial fitness: {}".format(initial_state.fitness))
@@ -136,3 +139,21 @@ def tsp_auto_example(cities=None, minutes=1, yield_every=10):
         ))
     print("Best fitness: {}".format(ga.fittest.fitness))
     return ga.fittest.fitness
+
+
+def tsp_parallel_test():
+    from .cities import cities_120 as cities
+    distance_matrix = get_distance_matrix(cities)
+    initial_state = TSPState(cities.keys(), cities, distance_matrix)
+
+    pcp = PopulationClassPath("idgaf.examples.tsp", "TSPPopulation")
+    pc = TSPPopulation
+    pgam = ParallelGAManager(pcp, pc)
+    pgam.init_populations_from_state(initial_state=initial_state,
+                                     population_size=500, num_populations=4)
+    start = time.time()
+    fitness = pgam.run(30, 10)
+    print("Best fitness: {}; took time {:.2f}s to find".format(
+        fitness,
+        time.time() - start
+    ))
