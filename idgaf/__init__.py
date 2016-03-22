@@ -95,6 +95,8 @@ class Population(object):
     @generation.setter
     def generation(self, gen):
         self._generation = self.sort_by_fittest(gen)
+        assert len(self._generation) >= self._tournament_size, \
+            "Population size is smaller than tournament size!"
 
     def evolve(self):
         next_generation = []
