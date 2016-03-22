@@ -2,6 +2,8 @@ from multiprocessing import cpu_count, Pool
 from collections import namedtuple
 from importlib import import_module
 
+import time
+
 from idgaf import Population, GeneticAlgorithm
 from idgaf.util import chunks
 
@@ -44,8 +46,8 @@ class ParallelGAManager(object):
         self, initial_state, population_size, num_populations=None, *args,
         **kwargs
     ):
-        assert num_populations % 4 == 0, "num_populations must be a " \
-                                         "multiple of 4"
+        # assert num_populations % 4 == 0, "num_populations must be a " \
+        #                                  "multiple of 4"
         self._init_from_state_args = (initial_state, population_size)
         self._pop_init_args = args
         self._pop_init_kwargs = kwargs
@@ -73,10 +75,10 @@ class ParallelGAManager(object):
 
     def run(self, metagenerations, generations):
         if self._populationss is None:
-            raise ValueError("ParalleGAManager is not initalized!"
+            raise ValueError("ParallelGAManager is not initalized!"
                              " Please call init_populations_from_state"
                              " to initialize.")
-
+        start = time.time()
         process_pool = Pool()
         for mi in range(metagenerations):
             print("Starting metageneration {}".format(mi))
@@ -97,45 +99,52 @@ class ParallelGAManager(object):
             ))
 
             print("Performing recombination of populations...")
-            new_pops = []
-            for pops in chunks(populations, 4):
-                if len(pops) != 4:
-                    raise ValueError
-                pop1, pop2, pop3, pop4 = pops
-
-                new_gen = pop1.combine(pop4)
-                pop1.generation = new_gen
-                new_gen = pop1.combine(pop2)
-                pop1.generation = new_gen
-                new_gen = pop1.combine(pop3)
-                pop1.generation = new_gen
-                new_pops.append(pop1)
-
-                # TODO need original not recombinated gens here
-                new_gen = pop2.combine(pop4)
-                pop2.generation = new_gen
-                new_gen = pop2.combine(pop3)
-                pop2.generation = new_gen
-                new_gen = pop2.combine(pop1)
-                pop2.generation = new_gen
-                new_pops.append(pop2)
-
-                # TODO change this combination of ALL best not just
-                #  best of these 4
-                gen_len = len(pop3.generation)/len(pops)
-                gens = [p.generation[:gen_len] for p in pops]
-                new_gen = []
-                for gen in gens:
-                    new_gen.extend(gen)
-                len_diff = self._init_from_state_args[1] - len(new_gen)
-                if len_diff:
-                    new_gen.extend(new_gen[:len_diff])
-                assert len(new_gen) == self._init_from_state_args[1]
-                pop3.generation = new_gen
-                new_pops.append(pop3)
-
-                pop4.generation = pop4.combine(pop3)
-                new_pops.append(pop4)
-            self.populations = new_pops
+            self.populations = self.recombination(populations)
+            # self.populations = self.evolve(populations)
+            print("Current time: {:.2f}".format(time.time() - start))
 
         return max(p.fittest.fitness for p in self.populations)
+
+    def recombination(self, populations):
+        """Recombine ``populations`` into a list of new populations
+        to return
+
+        :type populations: list
+        :rtype: list
+        """
+        populations = populations[:]
+        new_populations = []
+        r = len(populations) % 3
+        for i in range(r):
+            new_populations.append(populations.pop())
+
+        for a, b, c in chunks(populations, 3):
+            a_generation = a.combine(b)
+            b_generation = b.combine(c)
+            c_generation = c.combine(a)
+            a.generation = a_generation
+            b.generation = b_generation
+            c.generation = c_generation
+            new_populations.extend([a,b,c])
+        return new_populations
+
+    # def evolve(self, populations):
+    #     len_populations = len(populations)
+    #     mega_population = sorted(
+    #         [i for pop in populations for i in pop.generation],
+    #         key=lambda i: i.fitness, reverse=True
+    #     )
+    #     mega_population = mega_population[:int(len(mega_population)*0.8)]
+    #     generations = [[] for i in range(len_populations)]
+    #     for individuals in chunks(mega_population, len_populations):
+    #         for individual, generation in zip(individuals,
+    #                                           generations):
+    #             generation.append(individual)
+    #     for population, generation in zip(populations, generations):
+    #         population.generation = generation
+    #         print("New generation size: {}".format(len(generation)))
+    #     return populations
+    #
+    # def combine_top(self, populations):
+    #     len_populations = len(populations)
+    #     best_population =

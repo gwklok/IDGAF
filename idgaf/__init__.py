@@ -82,11 +82,6 @@ class Population(object):
     @classmethod
     def tournament(cls, states):
         """Returns the fittest of all given states"""
-        # fittest = states[0], states[0].fitness
-        # for state in states[1:]:
-        #     if state.fitness > fittest[1]:
-        #         fittest = state, state.fitness
-        # return state
         return cls.sort_by_fittest(states)[0]
 
     ##################
@@ -113,7 +108,7 @@ class Population(object):
         for state in self.generation[elite_size:]:
             other = self.tournament(random.sample(
                 self.generation,
-                self._tournament_size
+                min(self._tournament_size, len(self.generation))
             ))
             child = state.crossover(other)  # mate
             child.mutate()  # mutate

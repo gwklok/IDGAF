@@ -150,9 +150,9 @@ def tsp_parallel_test():
     pc = TSPPopulation
     pgam = ParallelGAManager(pcp, pc)
     pgam.init_populations_from_state(initial_state=initial_state,
-                                     population_size=500, num_populations=4)
+                                     population_size=500, num_populations=3)
     start = time.time()
-    fitness = pgam.run(30, 10)
+    fitness = pgam.run(5, 100)
     print("Best fitness: {}; took time {:.2f}s to find".format(
         fitness,
         time.time() - start
