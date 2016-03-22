@@ -1,3 +1,4 @@
+import random
 from multiprocessing import cpu_count, Pool
 from collections import namedtuple
 from importlib import import_module
@@ -98,6 +99,7 @@ class ParallelGAManager(object):
 
             print("Performing recombination of populations...")
             new_pops = []
+            random.shuffle(populations)
             for pops in chunks(populations, 4):
                 if len(pops) != 4:
                     raise ValueError
