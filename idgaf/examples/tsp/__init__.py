@@ -3,6 +3,7 @@ import math
 import random
 import json
 from copy import copy
+from multiprocessing import cpu_count
 
 from idgaf import State, GeneticAlgorithm, Population
 from idgaf.parallel import ParallelGAManager, PopulationClassPath, runner
@@ -139,18 +140,24 @@ def tsp_auto_example(cities=None, minutes=1, yield_every=10):
     return ga.fittest.fitness
 
 
-def tsp_parallel_test():
-    from .cities import cities_120 as cities
+def tsp_parallel_test(cities=None, population_size=500, target_fitness=None,
+                      metagenerations=10, generations=10):
+    if cities is None:
+        from .cities import cities_120 as cities
+
     distance_matrix = get_distance_matrix(cities)
     initial_state = TSPState(cities.keys(), cities, distance_matrix)
 
     pcp = PopulationClassPath("idgaf.examples.tsp", "TSPPopulation")
     pc = TSPPopulation
     pgam = ParallelGAManager(pcp, pc)
+    num_populations = max(4, cpu_count())
     pgam.init_populations_from_state(initial_state=initial_state,
-                                     population_size=500, num_populations=8)
+                                     population_size=population_size,
+                                     num_populations=num_populations)
     start = time.time()
-    fitness = pgam.run(30, 10)
+    fitness = pgam.run(target_fitness=target_fitness, generations=generations,
+                       metagenerations=metagenerations)
     print("Best fitness: {}; took time {:.2f}s to find".format(
         fitness,
         time.time() - start

@@ -73,14 +73,32 @@ class ParallelGAManager(object):
         """
         self._populationss = [p.serialize() for p in ps]
 
-    def run(self, metagenerations, generations):
+    def run(self, target_fitness=None, metagenerations=None, generations=100):
         if self._populationss is None:
             raise ValueError("ParallelGAManager is not initalized!"
                              " Please call init_populations_from_state"
                              " to initialize.")
         start = time.time()
         process_pool = Pool()
-        for mi in range(metagenerations):
+
+        if target_fitness and not metagenerations:
+            import itertools
+            mgs = itertools.count()
+            print("Running until target fitness of {} reached..."
+                  .format(target_fitness))
+        elif target_fitness and metagenerations:
+            print("Running until {} metagenerations complete OR "
+                  "until target fitness of {} reached..."
+                  .format(metagenerations, target_fitness))
+            mgs = range(metagenerations)
+        elif metagenerations and not target_fitness:
+            print("Running until {} metagenerations complete..."
+                  .format(metagenerations))
+            mgs = range(metagenerations)
+        else:
+            raise ValueError
+
+        for mi in mgs:
             print("Starting metageneration {}".format(mi))
             if not self._populationss:
                 break
@@ -101,6 +119,13 @@ class ParallelGAManager(object):
             print("Performing recombination of populations...")
             self.populations = self.recombination(populations)
             print("Current time: {:.2f}".format(time.time() - start))
+            best_fitness = max(p.fittest.fitness for p in populations)
+            print("Best current fitness: {}".format(best_fitness))
+            if target_fitness:
+                if best_fitness >= target_fitness:
+                    print("We beat target fitness of {}!"
+                          .format(target_fitness))
+                break
 
         return max(p.fittest.fitness for p in self.populations)
 
