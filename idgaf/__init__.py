@@ -1,10 +1,9 @@
 import time
 import random
-import math
-
 from abc import ABCMeta
 from abc import abstractmethod
 from abc import abstractproperty
+from itertools import chain
 
 
 class State(object):
@@ -122,17 +121,21 @@ class Population(object):
     def fittest(self):
         return self.generation[0]
 
-    def combine(self, other):
-        """Combines generation with other generation and returns new
+    def combine(self, *others):
+        """Combines generation with other(s) generation and returns new
         generation
 
-        :type other: Population
+        :param list others: List of Population objects
         :return: new generation
         :rtype: list
         """
+        num_populations = len(others)+1
         full_len = len(self.generation)
-        half_len = full_len/2
-        new = self.generation[:half_len] + other.generation[:half_len]
+        part_len = full_len/num_populations
+        new = self.generation[:part_len] + \
+              [state for other in others for
+               state in other.generation[:part_len]]
+        print("Expected size {}; actual size {}".format(full_len, len(new)))
         len_diff = full_len - len(new)
         if len_diff:
             new.extend(self.generation[:len_diff])
