@@ -125,7 +125,7 @@ class ParallelGAManager(object):
                 if best_fitness >= target_fitness:
                     print("We beat target fitness of {}!"
                           .format(target_fitness))
-                break
+                    break
 
         return max(p.fittest.fitness for p in self.populations)
 
