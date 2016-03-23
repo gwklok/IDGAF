@@ -117,7 +117,8 @@ class ParallelGAManager(object):
             ))
 
             print("Performing recombination of populations...")
-            self.populations = self.recombination(populations)
+            # self.populations = self.recombination(populations)
+            self.populations = self.ruthless_eugenics(populations)
             print("Current time: {:.2f}".format(time.time() - start))
             best_fitness = max(p.fittest.fitness for p in populations)
             print("Best current fitness: {}".format(best_fitness))
@@ -173,3 +174,10 @@ class ParallelGAManager(object):
             pop4.generation = pop4.combine(pop3)
             new_pops.append(pop4)
         return new_pops
+
+    def ruthless_eugenics(self, populations):
+        num_populations = len(populations)
+        populations = populations[:]
+        the_chosen_one = populations.pop(0)
+        the_chosen_one.generation = the_chosen_one.combine(*populations)
+        return [the_chosen_one]*(num_populations-1) + [populations[-1]]
