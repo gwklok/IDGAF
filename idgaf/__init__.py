@@ -18,10 +18,9 @@ class State(object):
 
     @abstractmethod
     def crossover(self, other):
-        """Returns crossover between this state and another
+        """Performs in-place crossover between this state and other
 
         :type other: State
-        :rtype: State
         """
         raise NotImplementedError
 
@@ -112,7 +111,8 @@ class Population(object):
                 self.generation,
                 self._tournament_size
             ))
-            child = state.crossover(other)  # mate
+            child = state
+            child.crossover(other)  # mate
             child.mutate()  # mutate
             next_generation.append(child)
 

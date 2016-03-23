@@ -65,9 +65,7 @@ class TSPState(State):
                     break
                 if child[child_ptr] is not None:
                     child_ptr = endpos
-        # Just in case the algorithm above is broken
-        assert len(set(child)) == route_len
-        return TSPState(child, self.cities, self.distance_matrix)
+        self.route = child
 
     def mutate(self):
         state = self.route
