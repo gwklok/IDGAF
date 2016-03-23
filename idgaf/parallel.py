@@ -117,8 +117,8 @@ class ParallelGAManager(object):
             ))
 
             print("Performing recombination of populations...")
-            # self.populations = self.recombination(populations)
-            self.populations = self.ruthless_eugenics(populations)
+            self.populations = self.recombination(populations)
+            # self.populations = self.better_eugenics(populations)
             print("Current time: {:.2f}".format(time.time() - start))
             best_fitness = max(p.fittest.fitness for p in populations)
             print("Best current fitness: {}".format(best_fitness))
@@ -171,7 +171,7 @@ class ParallelGAManager(object):
             pop3.generation = new_gen
             new_pops.append(pop3)
 
-            pop4.generation = pop4.combine(pop3)
+            pop4.generation = pop4.combine(*populations)
             new_pops.append(pop4)
         return new_pops
 
@@ -181,3 +181,22 @@ class ParallelGAManager(object):
         the_chosen_one = populations.pop(0)
         the_chosen_one.generation = the_chosen_one.combine(*populations)
         return [the_chosen_one]*(num_populations-1) + [populations[-1]]
+
+    def other_eugenics(self, populations):
+        new_populations = []
+        num_populations = len(populations)
+        populations = populations[:]
+
+        the_chosen_one = populations.pop(0)
+        the_chosen_one.generation = the_chosen_one.combine(*populations)
+        new_populations.append(the_chosen_one)
+
+        for subpopulations in chunks(populations, num_populations/2):
+            numsubpops = len(subpopulations)
+            the_sub_chosen_one = subpopulations.pop(0)
+            the_sub_chosen_one.generation = the_sub_chosen_one.combine(
+                *subpopulations)
+            new_populations.extend([the_sub_chosen_one]*(numsubpops))
+
+        assert len(new_populations) == num_populations
+        return new_populations

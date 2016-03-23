@@ -38,10 +38,11 @@ class TSPState(State):
     :param dict cities: Dict of cities with their coordinates
     :param distance_matrix: Pre-computed distance_matrix for cities
     """
-    def __init__(self, route, cities, distance_matrix):
+    def __init__(self, route, cities, distance_matrix, mutation_scale=0):
         self.route = route
         self.cities = cities
         self.distance_matrix = distance_matrix
+        self._mutation_scale = mutation_scale
 
     @property
     def fitness(self):
@@ -70,9 +71,10 @@ class TSPState(State):
 
     def mutate(self):
         state = self.route
-        a = random.randint(0, len(state) - 1)
-        b = random.randint(0, len(state) - 1)
-        state[a], state[b] = state[b], state[a]
+        for i in range(max(1, int(len(state)*self._mutation_scale))):
+            a = random.randint(0, len(state) - 1)
+            b = random.randint(0, len(state) - 1)
+            state[a], state[b] = state[b], state[a]
 
     def new(self, state=None):
         if state is None:
